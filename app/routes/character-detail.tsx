@@ -1,8 +1,8 @@
-import { Suspense } from "react";
-import { useLoaderData, Link } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useLoaderData, Link, useParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { GET_CHARACTER } from "~/lib/queries";
-import { createApolloClient } from "~/lib/apollo";
+import { ApolloService } from "~/services/apollo-service";
+import { useCharactersStore, useSelectedCharacter, useCharactersLoading, useCharactersError } from "~/store";
 
 interface Episode {
   id: string;
@@ -44,7 +44,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const client = createApolloClient();
   const characterId = params.id;
 
   if (!characterId) {
@@ -52,14 +51,11 @@ export async function loader({ params }: LoaderFunctionArgs) {
   }
 
   try {
-    const { data } = await client.query({
-      query: GET_CHARACTER,
-      variables: { id: characterId },
-    });
+    const character = await ApolloService.fetchCharacter(characterId);
 
     return {
-      character: data.character as Character,
-      apolloState: client.cache.extract(),
+      character,
+      characterId,
     };
   } catch (error) {
     throw new Response("Character not found", { status: 404 });
@@ -88,7 +84,88 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function CharacterDetail() {
-  const { character } = useLoaderData<typeof loader>();
+  const { character: ssrCharacter, characterId } = useLoaderData<typeof loader>();
+  const params = useParams();
+  
+  // Get Zustand state
+  const selectedCharacter = useSelectedCharacter();
+  const isLoading = useCharactersLoading();
+  const error = useCharactersError();
+  const { fetchCharacter, selectCharacter, clearError } = useCharactersStore();
+  
+  // Use the character ID from params or loader
+  const currentId = params.id || characterId;
+  
+  // Initialize store with SSR data and handle client-side navigation
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    if (!selectedCharacter || selectedCharacter.id !== currentId) {
+      if (ssrCharacter && ssrCharacter.id === currentId) {
+        // Initialize store with SSR data
+        selectCharacter(ssrCharacter);
+      } else if (currentId) {
+        // Client-side navigation - fetch from store
+        fetchCharacter(currentId);
+      }
+    }
+  }, [currentId, ssrCharacter, selectedCharacter, fetchCharacter, selectCharacter]);
+  
+  // Error display
+  if (error) {
+    return (
+      <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
+          <Link to="/characters" style={{ color: "#3b82f6", textDecoration: "none", fontSize: "0.875rem" }}>
+            ← Back to Characters
+          </Link>
+        </div>
+        
+        <div style={{ 
+          backgroundColor: "#fef2f2", 
+          border: "1px solid #fecaca", 
+          borderRadius: "0.5rem", 
+          padding: "1rem",
+          color: "#b91c1c"
+        }}>
+          <h2 style={{ margin: "0 0 0.5rem 0" }}>Error Loading Character</h2>
+          <p style={{ margin: "0 0 1rem 0" }}>{error}</p>
+          <button
+            onClick={clearError}
+            style={{
+              backgroundColor: "#dc2626",
+              color: "white",
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderRadius: "0.25rem",
+              cursor: "pointer"
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show loading state or use SSR character as fallback
+  const character = selectedCharacter || ssrCharacter;
+  
+  if (!character) {
+    return (
+      <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
+          <Link to="/characters" style={{ color: "#3b82f6", textDecoration: "none", fontSize: "0.875rem" }}>
+            ← Back to Characters
+          </Link>
+        </div>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p>Loading character...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
@@ -114,7 +191,9 @@ export default function CharacterDetail() {
           display: "grid",
           gridTemplateColumns: "300px 1fr",
           gap: "2rem",
-          alignItems: "start"
+          alignItems: "start",
+          opacity: isLoading ? 0.5 : 1,
+          transition: "opacity 0.2s"
         }}>
           <div>
             <img
@@ -129,9 +208,16 @@ export default function CharacterDetail() {
           </div>
 
           <div>
-            <h1 style={{ fontSize: "2.25rem", fontWeight: "700", marginBottom: "1rem" }}>
-              {character.name}
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "1rem" }}>
+              <h1 style={{ fontSize: "2.25rem", fontWeight: "700", margin: 0 }}>
+                {character.name}
+              </h1>
+              {isLoading && (
+                <div style={{ marginLeft: "1rem", color: "#6b7280", fontSize: "0.875rem" }}>
+                  Updating...
+                </div>
+              )}
+            </div>
 
             <div style={{ marginBottom: "2rem" }}>
               <StatusBadge status={character.status} />
@@ -174,36 +260,38 @@ export default function CharacterDetail() {
               )}
             </div>
 
-            <div>
-              <h3 style={{ fontWeight: "600", marginBottom: "1rem" }}>
-                Episodes ({character.episode.length})
-              </h3>
-              <div style={{ 
-                maxHeight: "300px", 
-                overflowY: "auto",
-                border: "1px solid #e2e8f0",
-                borderRadius: "0.5rem",
-                padding: "1rem"
-              }}>
-                {character.episode.map((episode) => (
-                  <div
-                    key={episode.id}
-                    style={{
-                      padding: "0.75rem",
-                      borderBottom: "1px solid #f1f5f9",
-                      marginBottom: "0.5rem"
-                    }}
-                  >
-                    <div style={{ fontWeight: "500", marginBottom: "0.25rem" }}>
-                      {episode.episode}: {episode.name}
+            {character.episode && character.episode.length > 0 && (
+              <div>
+                <h3 style={{ fontWeight: "600", marginBottom: "1rem" }}>
+                  Episodes ({character.episode.length})
+                </h3>
+                <div style={{ 
+                  maxHeight: "300px", 
+                  overflowY: "auto",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "0.5rem",
+                  padding: "1rem"
+                }}>
+                  {character.episode.map((episode) => (
+                    <div
+                      key={episode.id}
+                      style={{
+                        padding: "0.75rem",
+                        borderBottom: "1px solid #f1f5f9",
+                        marginBottom: "0.5rem"
+                      }}
+                    >
+                      <div style={{ fontWeight: "500", marginBottom: "0.25rem" }}>
+                        {episode.episode}: {episode.name}
+                      </div>
+                      <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                        {episode.air_date}
+                      </div>
                     </div>
-                    <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                      {episode.air_date}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </Suspense>

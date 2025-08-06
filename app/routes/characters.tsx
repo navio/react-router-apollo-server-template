@@ -1,9 +1,8 @@
-import { Suspense } from "react";
-import { useLoaderData, Link } from "react-router";
-import { useQuery } from "@apollo/client";
+import { Suspense, useEffect } from "react";
+import { useLoaderData, Link, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { GET_CHARACTERS } from "~/lib/queries";
-import { createApolloClient } from "~/lib/apollo";
+import { ApolloService } from "~/services/apollo-service";
+import { useCharactersStore, useCharacters, useCharactersLoading, useCharactersError } from "~/store";
 
 export const meta: MetaFunction = () => {
   return [
@@ -40,20 +39,18 @@ interface CharactersData {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const client = createApolloClient();
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") || "1");
 
   try {
-    const { data } = await client.query({
-      query: GET_CHARACTERS,
-      variables: { page },
-    });
+    // Use the Apollo service for SSR data fetching
+    const data = await ApolloService.fetchCharacters(page);
 
     return {
       characters: data.characters,
-      apolloState: client.cache.extract(),
       currentPage: page,
+      // We can still provide Apollo state if needed for other operations
+      apolloState: {},
     };
   } catch (error) {
     throw new Response("Failed to fetch characters", { status: 500 });
@@ -142,7 +139,86 @@ function Pagination({ info, currentPage }: { info: any; currentPage: number }) {
 }
 
 export default function Characters() {
-  const { characters, currentPage } = useLoaderData<typeof loader>();
+  const { characters: ssrCharacters, currentPage: ssrPage } = useLoaderData<typeof loader>();
+  const [searchParams] = useSearchParams();
+  
+  // Get Zustand state
+  const characters = useCharacters();
+  const isLoading = useCharactersLoading();
+  const error = useCharactersError();
+  const { fetchCharacters, clearError } = useCharactersStore();
+  
+  // Get current page from URL
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  
+  // Initialize store with SSR data and handle client-side navigation
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    if (characters.items.length === 0 || characters.pagination.currentPage !== currentPage) {
+      // Use SSR data for initial load, then fetch for subsequent navigations
+      if (characters.items.length === 0 && ssrCharacters) {
+        // Initialize store with SSR data
+        useCharactersStore.setState({
+          characters: {
+            items: ssrCharacters.results,
+            pagination: {
+              currentPage: ssrPage,
+              totalPages: ssrCharacters.info.pages,
+              hasNext: ssrCharacters.info.next !== null,
+              hasPrev: ssrCharacters.info.prev !== null,
+            },
+          },
+        });
+      } else {
+        // Client-side navigation - fetch from store
+        fetchCharacters(currentPage);
+      }
+    }
+  }, [currentPage, ssrCharacters, ssrPage, characters.items.length, fetchCharacters]);
+
+  // Error display
+  if (error) {
+    return (
+      <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
+          <Link to="/" style={{ color: "#3b82f6", textDecoration: "none", fontSize: "0.875rem" }}>
+            ← Back to Home
+          </Link>
+        </div>
+        
+        <div style={{ 
+          backgroundColor: "#fef2f2", 
+          border: "1px solid #fecaca", 
+          borderRadius: "0.5rem", 
+          padding: "1rem",
+          color: "#b91c1c"
+        }}>
+          <h2 style={{ margin: "0 0 0.5rem 0" }}>Error Loading Characters</h2>
+          <p style={{ margin: "0 0 1rem 0" }}>{error}</p>
+          <button
+            onClick={clearError}
+            style={{
+              backgroundColor: "#dc2626",
+              color: "white",
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderRadius: "0.25rem",
+              cursor: "pointer"
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const displayData = characters.items.length > 0 ? characters : { 
+    items: ssrCharacters?.results || [], 
+    pagination: characters.pagination 
+  };
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
@@ -159,7 +235,14 @@ export default function Characters() {
         </Link>
       </div>
       
-      <h1 style={{ marginBottom: "2rem" }}>Rick and Morty Characters</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+        <h1 style={{ margin: 0 }}>Rick and Morty Characters</h1>
+        {isLoading && (
+          <div style={{ color: "#6b7280", fontSize: "0.875rem" }}>
+            Loading...
+          </div>
+        )}
+      </div>
       
       <Suspense fallback={
         <div style={{ textAlign: "center", padding: "2rem" }}>
@@ -169,14 +252,23 @@ export default function Characters() {
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: "1.5rem"
+          gap: "1.5rem",
+          opacity: isLoading ? 0.5 : 1,
+          transition: "opacity 0.2s"
         }}>
-          {characters.results.map((character: Character) => (
+          {displayData.items.map((character: Character) => (
             <CharacterCard key={character.id} character={character} />
           ))}
         </div>
 
-        <Pagination info={characters.info} currentPage={currentPage} />
+        <Pagination 
+          info={{
+            pages: characters.pagination.totalPages,
+            next: characters.pagination.hasNext ? currentPage + 1 : null,
+            prev: characters.pagination.hasPrev ? currentPage - 1 : null,
+          }} 
+          currentPage={currentPage} 
+        />
       </Suspense>
     </div>
   );
