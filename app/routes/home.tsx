@@ -29,9 +29,25 @@ export default function Index() {
                 borderRadius: "0.25rem",
                 display: "inline-block",
                 transition: "all 0.2s",
+                marginRight: "1rem"
               }}
             >
               View Rick and Morty Characters
+            </Link>
+            <Link
+              to="/internal"
+              style={{
+                color: "#10b981",
+                textDecoration: "none",
+                fontSize: "1.1rem",
+                padding: "0.5rem 1rem",
+                border: "1px solid #10b981",
+                borderRadius: "0.25rem",
+                display: "inline-block",
+                transition: "all 0.2s",
+              }}
+            >
+              Internal GraphQL API
             </Link>
           </li>
         </ul>

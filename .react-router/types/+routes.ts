@@ -21,12 +21,15 @@ type Pages = {
       "id": string;
     };
   };
+  "/internal": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/characters" | "/characters/:id";
+    page: "/" | "/characters" | "/characters/:id" | "/internal";
   };
   "routes/home.tsx": {
     id: "routes/home";
@@ -39,5 +42,9 @@ type RouteFiles = {
   "routes/character-detail.tsx": {
     id: "routes/character-detail";
     page: "/characters/:id";
+  };
+  "routes/internal.tsx": {
+    id: "routes/internal";
+    page: "/internal";
   };
 };
