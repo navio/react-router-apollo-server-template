@@ -1,86 +1,43 @@
 import { create } from 'zustand';
-import type { Event, EventType, EventListener } from './types';
-
 interface EventBusState {
-  listeners: Map<EventType, Set<EventListener>>;
-  history: Event[];
-  // Actions
-  emit: <T>(type: EventType, payload?: T) => void;
-  on: <T>(type: EventType, listener: EventListener<T>) => () => void;
-  off: <T>(type: EventType, listener: EventListener<T>) => void;
-  clear: () => void;
-  getHistory: (type?: EventType) => Event[];
+  emit: (event: string, payload: any) => void;
+  subscribe: (event: string, callback: (payload: any) => void) => () => void;
+  listeners: Record<string, Array<(payload: any) => void>>;
 }
 
 export const useEventBus = create<EventBusState>((set, get) => ({
-  listeners: new Map(),
-  history: [],
+  listeners: {},
 
-  emit: <T>(type: EventType, payload?: T) => {
-    const event: Event<T> = {
-      type,
-      payload,
-      timestamp: Date.now(),
-    };
-
-    set((state) => ({
-      history: [...state.history.slice(-99), event], // Keep last 100 events
-    }));
-
-    const listeners = get().listeners.get(type);
-    if (listeners) {
-      listeners.forEach((listener) => {
-        try {
-          listener(event);
-        } catch (error) {
-          console.error(`Event listener error for ${type}:`, error);
-        }
-      });
-    }
+  emit: (event: string, payload: any) => {
+    const { listeners } = get();
+    const eventListeners = listeners[event] || [];
+    eventListeners.forEach(callback => callback(payload));
   },
 
-  on: <T>(type: EventType, listener: EventListener<T>) => {
+  subscribe: (event: string, callback: (payload: any) => void) => {
     const { listeners } = get();
+    const eventListeners = listeners[event] || [];
+    eventListeners.push(callback);
     
-    if (!listeners.has(type)) {
-      listeners.set(type, new Set());
-    }
-    
-    listeners.get(type)!.add(listener);
-    
-    set({ listeners: new Map(listeners) });
-    
+    set({ 
+      listeners: { 
+        ...listeners, 
+        [event]: eventListeners 
+      } 
+    });
+
     // Return unsubscribe function
     return () => {
-      get().off(type, listener);
+      const { listeners: currentListeners } = get();
+      const currentEventListeners = currentListeners[event] || [];
+      const updatedListeners = currentEventListeners.filter(cb => cb !== callback);
+      
+      set({
+        listeners: {
+          ...currentListeners,
+          [event]: updatedListeners
+        }
+      });
     };
-  },
-
-  off: <T>(type: EventType, listener: EventListener<T>) => {
-    const { listeners } = get();
-    const typeListeners = listeners.get(type);
-    
-    if (typeListeners) {
-      typeListeners.delete(listener);
-      if (typeListeners.size === 0) {
-        listeners.delete(type);
-      }
-      set({ listeners: new Map(listeners) });
-    }
-  },
-
-  clear: () => {
-    set({
-      listeners: new Map(),
-      history: [],
-    });
-  },
-
-  getHistory: (type?: EventType) => {
-    const { history } = get();
-    if (type) {
-      return history.filter((event) => event.type === type);
-    }
-    return history;
-  },
+  }
 }));

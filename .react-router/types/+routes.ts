@@ -31,20 +31,20 @@ type RouteFiles = {
     id: "root";
     page: "/" | "/characters" | "/characters/:id" | "/internal";
   };
-  "routes/home.tsx": {
-    id: "routes/home";
+  "features/home/routes/home.tsx": {
+    id: "features/home/routes/home";
     page: "/";
   };
-  "routes/characters.tsx": {
-    id: "routes/characters";
+  "features/rick-and-morty/routes/characters.tsx": {
+    id: "features/rick-and-morty/routes/characters";
     page: "/characters";
   };
-  "routes/character-detail.tsx": {
-    id: "routes/character-detail";
+  "features/rick-and-morty/routes/character-detail.tsx": {
+    id: "features/rick-and-morty/routes/character-detail";
     page: "/characters/:id";
   };
-  "routes/internal.tsx": {
-    id: "routes/internal";
+  "features/internal-api/routes/internal.tsx": {
+    id: "features/internal-api/routes/internal";
     page: "/internal";
   };
 };
