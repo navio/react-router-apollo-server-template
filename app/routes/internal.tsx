@@ -1,9 +1,18 @@
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useLoaderData, Link } from "react-router";
-import { useQuery, useMutation } from "@apollo/client";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { GET_HEALTH_CHECK, GET_INTERNAL_DATA, CREATE_INTERNAL_DATA } from "~/lib/internal-queries";
-import { createApolloClient } from "~/lib/apollo";
+import { ApolloService } from "~/services/apollo-service";
+import { 
+  useInternalStore, 
+  useHealth, 
+  useInternalData, 
+  useHealthLoading, 
+  useDataLoading, 
+  useCreateLoading, 
+  useInternalError,
+  useEventBus,
+  useAppStore 
+} from "~/store";
 
 export const meta: MetaFunction = () => {
   return [
@@ -33,18 +42,15 @@ interface LoaderData {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const client = createApolloClient();
-
   try {
-    const [healthResult, internalResult] = await Promise.all([
-      client.query({ query: GET_HEALTH_CHECK }),
-      client.query({ query: GET_INTERNAL_DATA }),
+    const [health, internalData] = await Promise.all([
+      ApolloService.fetchHealthCheck(),
+      ApolloService.fetchInternalData(),
     ]);
 
     return {
-      health: healthResult.data.health,
-      internalData: internalResult.data.internalData,
-      apolloState: client.cache.extract(),
+      health,
+      internalData,
     };
   } catch (error) {
     console.error('Internal API error:', error);
@@ -133,18 +139,39 @@ function InternalDataList({ data }: { data: InternalDataItem[] }) {
 }
 
 function CreateDataForm() {
-  const [createData, { loading, error, data }] = useMutation(CREATE_INTERNAL_DATA, {
-    refetchQueries: [{ query: GET_INTERNAL_DATA }],
-  });
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const createLoading = useCreateLoading();
+  const error = useInternalError();
+  const { createInternalData, clearError } = useInternalStore();
+  const { addNotification } = useAppStore();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
     const value = formData.get('value') as string;
 
-    createData({ variables: { name, value } });
-    e.currentTarget.reset();
+    try {
+      await createInternalData({ name, value });
+      e.currentTarget.reset();
+      setSuccessMessage(`Successfully created: ${name}`);
+      
+      // Show notification
+      addNotification({
+        type: 'success',
+        message: `Created internal data: ${name}`,
+        duration: 3000,
+      });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      addNotification({
+        type: 'error',
+        message: 'Failed to create internal data',
+        duration: 5000,
+      });
+    }
   };
 
   return (
@@ -198,30 +225,44 @@ function CreateDataForm() {
         
         <button
           type="submit"
-          disabled={loading}
+          disabled={createLoading}
           style={{
-            backgroundColor: loading ? "#9ca3af" : "#3b82f6",
+            backgroundColor: createLoading ? "#9ca3af" : "#3b82f6",
             color: "white",
             padding: "0.5rem 1rem",
             border: "none",
             borderRadius: "0.25rem",
-            cursor: loading ? "not-allowed" : "pointer",
+            cursor: createLoading ? "not-allowed" : "pointer",
             fontSize: "1rem"
           }}
         >
-          {loading ? "Creating..." : "Create Data"}
+          {createLoading ? "Creating..." : "Create Data"}
         </button>
       </form>
       
       {error && (
         <div style={{ color: "#ef4444", marginTop: "0.5rem" }}>
-          Error: {error.message}
+          Error: {error}
+          <button
+            onClick={clearError}
+            style={{
+              marginLeft: "0.5rem",
+              background: "none",
+              border: "none",
+              color: "#ef4444",
+              textDecoration: "underline",
+              cursor: "pointer",
+              fontSize: "0.875rem"
+            }}
+          >
+            Dismiss
+          </button>
         </div>
       )}
       
-      {data && (
+      {successMessage && (
         <div style={{ color: "#10b981", marginTop: "0.5rem" }}>
-          Successfully created: {data.createInternalData.name}
+          {successMessage}
         </div>
       )}
     </div>
@@ -229,7 +270,111 @@ function CreateDataForm() {
 }
 
 export default function Internal() {
-  const { health, internalData } = useLoaderData<LoaderData>();
+  const { health: ssrHealth, internalData: ssrInternalData } = useLoaderData<LoaderData>();
+  
+  // Get Zustand state
+  const health = useHealth();
+  const internalData = useInternalData();
+  const healthLoading = useHealthLoading();
+  const dataLoading = useDataLoading();
+  const error = useInternalError();
+  const { fetchHealth, fetchInternalData, clearError } = useInternalStore();
+  const { on } = useEventBus();
+  
+  // Initialize store with SSR data and set up event listeners
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    // Initialize with SSR data if store is empty
+    if (!health && ssrHealth) {
+      useInternalStore.setState({ health: ssrHealth });
+    }
+    if (internalData.length === 0 && ssrInternalData) {
+      useInternalStore.setState({ internalData: ssrInternalData });
+    }
+    
+    // Set up event listeners
+    const unsubscribeDataUpdated = on('DATA_UPDATED', (event) => {
+      if (event.payload && typeof event.payload === 'object' && 'type' in event.payload && event.payload.type === 'internal-data-created') {
+        // Data was updated, could refresh if needed
+        console.log('Internal data updated:', event.payload);
+      }
+    });
+    
+    return () => {
+      unsubscribeDataUpdated();
+    };
+  }, [ssrHealth, ssrInternalData, health, internalData.length, on]);
+  
+  // Auto-refresh health status every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchHealth();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [fetchHealth]);
+  
+  // Error display
+  if (error) {
+    return (
+      <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
+          <Link to="/" style={{ color: "#3b82f6", textDecoration: "none", fontSize: "0.875rem" }}>
+            ← Back to Home
+          </Link>
+        </div>
+        
+        <div style={{ 
+          backgroundColor: "#fef2f2", 
+          border: "1px solid #fecaca", 
+          borderRadius: "0.5rem", 
+          padding: "1rem",
+          color: "#b91c1c"
+        }}>
+          <h2 style={{ margin: "0 0 0.5rem 0" }}>Error Loading Internal Data</h2>
+          <p style={{ margin: "0 0 1rem 0" }}>{error}</p>
+          <div>
+            <button
+              onClick={clearError}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "0.25rem",
+                cursor: "pointer",
+                marginRight: "0.5rem"
+              }}
+            >
+              Clear Error
+            </button>
+            <button
+              onClick={() => {
+                fetchHealth();
+                fetchInternalData();
+              }}
+              style={{
+                backgroundColor: "#3b82f6",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "0.25rem",
+                cursor: "pointer"
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Use store data or fallback to SSR data
+  const displayHealth = health || ssrHealth;
+  const displayData = internalData.length > 0 ? internalData : ssrInternalData;
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
@@ -246,7 +391,32 @@ export default function Internal() {
         </Link>
       </div>
       
-      <h1 style={{ marginBottom: "2rem" }}>Internal GraphQL API</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+        <h1 style={{ margin: 0 }}>Internal GraphQL API</h1>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          {(healthLoading || dataLoading) && (
+            <div style={{ color: "#6b7280", fontSize: "0.875rem" }}>
+              Updating...
+            </div>
+          )}
+          <button
+            onClick={() => {
+              fetchHealth();
+              fetchInternalData();
+            }}
+            style={{
+              backgroundColor: "#f3f4f6",
+              border: "1px solid #d1d5db",
+              borderRadius: "0.25rem",
+              padding: "0.25rem 0.5rem",
+              cursor: "pointer",
+              fontSize: "0.75rem"
+            }}
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
       
       <div style={{
         display: "grid",
@@ -254,7 +424,7 @@ export default function Internal() {
         gap: "2rem",
         marginBottom: "2rem"
       }}>
-        <HealthStatus health={health} />
+        {displayHealth && <HealthStatus health={displayHealth} />}
         <CreateDataForm />
       </div>
       
@@ -263,7 +433,12 @@ export default function Internal() {
           <p>Loading internal data...</p>
         </div>
       }>
-        <InternalDataList data={internalData} />
+        <div style={{ 
+          opacity: dataLoading ? 0.5 : 1,
+          transition: "opacity 0.2s" 
+        }}>
+          <InternalDataList data={displayData} />
+        </div>
       </Suspense>
     </div>
   );

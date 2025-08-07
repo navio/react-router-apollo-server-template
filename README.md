@@ -5,11 +5,13 @@ A modern React application demonstrating Server-Side Rendering (SSR) with React 
 ## Features
 
 - ✅ **Server-Side Rendering (SSR)** with React Router 7
-- ✅ **Apollo Client** for GraphQL data fetching
+- ✅ **Zustand** for global state management and events
+- ✅ **Apollo Client** abstraction layer for GraphQL
 - ✅ **Apollo Server** for internal GraphQL API
+- ✅ **Event-driven architecture** with cross-component communication
 - ✅ **Vite** with proxy for seamless development
 - ✅ **TypeScript** for type safety
-- ✅ **Jest** for testing
+- ✅ **Jest** for testing with store mocking
 - ✅ **Rick and Morty API** for external data
 - ✅ **Internal API** with health checks and CRUD operations
 

@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import { AppApolloProvider } from "./lib/apollo-provider";
+import { StoreInitializer } from "./components/store-initializer";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -51,6 +52,7 @@ export default function App() {
   
   return (
     <AppApolloProvider initialState={apolloState}>
+      <StoreInitializer />
       <Outlet />
     </AppApolloProvider>
   );
