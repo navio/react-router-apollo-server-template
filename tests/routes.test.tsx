@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { render, screen } from '@testing-library/react';
-import Index from '../app/features/home/routes/home';
+import Index from '../app/routes/home';
 
 // Mock React Router Link component
 jest.mock('react-router', () => ({

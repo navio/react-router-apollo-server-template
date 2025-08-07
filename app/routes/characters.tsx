@@ -1,15 +1,8 @@
 import { Suspense, useEffect } from "react";
 import { useLoaderData, Link, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { RickAndMortyAPI } from "../services/api";
-import { 
-  useRickAndMortyStore, 
-  useCharacters, 
-  useCharactersLoading, 
-  useCharactersError 
-} from "../store/characters-store";
-import { CharacterCard, Pagination } from "../components";
-import type { Character } from "../types";
+import { ApolloService } from "~/services/apollo-service";
+import { useCharactersStore, useCharacters, useCharactersLoading, useCharactersError } from "~/store";
 
 export const meta: MetaFunction = () => {
   return [
@@ -18,21 +11,131 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+interface Character {
+  id: string;
+  name: string;
+  status: string;
+  species: string;
+  gender: string;
+  image: string;
+  origin: {
+    name: string;
+  };
+  location: {
+    name: string;
+  };
+}
+
+interface CharactersData {
+  characters: {
+    results: Character[];
+    info: {
+      count: number;
+      pages: number;
+      next: number | null;
+      prev: number | null;
+    };
+  };
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") || "1");
 
   try {
-    const data = await RickAndMortyAPI.fetchCharacters(page);
+    // Use the Apollo service for SSR data fetching
+    const data = await ApolloService.fetchCharacters(page);
 
     return {
       characters: data.characters,
       currentPage: page,
+      // We can still provide Apollo state if needed for other operations
       apolloState: {},
     };
   } catch (error) {
     throw new Response("Failed to fetch characters", { status: 500 });
   }
+}
+
+function CharacterCard({ character }: { character: Character }) {
+  return (
+    <div style={{
+      border: "1px solid #e2e8f0",
+      borderRadius: "0.5rem",
+      padding: "1rem",
+      backgroundColor: "white",
+      boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)"
+    }}>
+      <Link
+        to={`/characters/${character.id}`}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
+        <img
+          src={character.image}
+          alt={character.name}
+          style={{
+            width: "100%",
+            height: "200px",
+            objectFit: "cover",
+            borderRadius: "0.25rem",
+            marginBottom: "0.5rem"
+          }}
+        />
+        <h3 style={{ margin: "0.5rem 0", fontSize: "1.1rem", fontWeight: "600" }}>
+          {character.name}
+        </h3>
+        <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+          <p style={{ margin: "0.25rem 0" }}>
+            <span style={{ fontWeight: "500" }}>Status:</span> {character.status}
+          </p>
+          <p style={{ margin: "0.25rem 0" }}>
+            <span style={{ fontWeight: "500" }}>Species:</span> {character.species}
+          </p>
+          <p style={{ margin: "0.25rem 0" }}>
+            <span style={{ fontWeight: "500" }}>Location:</span> {character.location.name}
+          </p>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
+function Pagination({ info, currentPage }: { info: any; currentPage: number }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
+      {info.prev && (
+        <Link
+          to={`/characters?page=${currentPage - 1}`}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#3b82f6",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "0.25rem"
+          }}
+        >
+          Previous
+        </Link>
+      )}
+      <span style={{ padding: "0.5rem 1rem" }}>
+        Page {currentPage} of {info.pages}
+      </span>
+      {info.next && (
+        <Link
+          to={`/characters?page=${currentPage + 1}`}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#3b82f6",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "0.25rem"
+          }}
+        >
+          Next
+        </Link>
+      )}
+    </div>
+  );
 }
 
 export default function Characters() {
@@ -43,7 +146,7 @@ export default function Characters() {
   const characters = useCharacters();
   const isLoading = useCharactersLoading();
   const error = useCharactersError();
-  const { fetchCharacters, clearError } = useRickAndMortyStore();
+  const { fetchCharacters, clearError } = useCharactersStore();
   
   // Get current page from URL
   const currentPage = parseInt(searchParams.get("page") || "1");
@@ -57,7 +160,7 @@ export default function Characters() {
       // Use SSR data for initial load, then fetch for subsequent navigations
       if (characters.items.length === 0 && ssrCharacters) {
         // Initialize store with SSR data
-        useRickAndMortyStore.setState({
+        useCharactersStore.setState({
           characters: {
             items: ssrCharacters.results,
             pagination: {
@@ -159,10 +262,12 @@ export default function Characters() {
         </div>
 
         <Pagination 
-          currentPage={currentPage}
-          totalPages={characters.pagination.totalPages}
-          hasNext={characters.pagination.hasNext}
-          hasPrev={characters.pagination.hasPrev}
+          info={{
+            pages: characters.pagination.totalPages,
+            next: characters.pagination.hasNext ? currentPage + 1 : null,
+            prev: characters.pagination.hasPrev ? currentPage - 1 : null,
+          }} 
+          currentPage={currentPage} 
         />
       </Suspense>
     </div>

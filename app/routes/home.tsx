@@ -8,7 +8,7 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function Home() {
+export default function Index() {
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8", padding: "2rem" }}>
       <h1>Welcome to React Router + Apollo SSR</h1>
@@ -61,8 +61,6 @@ export default function Home() {
           <li>✅ Vite bundler</li>
           <li>✅ TypeScript support</li>
           <li>✅ Jest testing setup</li>
-          <li>✅ Zustand global state management</li>
-          <li>✅ Feature-based architecture</li>
         </ul>
       </div>
     </div>
