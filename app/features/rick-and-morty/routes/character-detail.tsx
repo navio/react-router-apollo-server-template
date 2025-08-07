@@ -232,10 +232,13 @@ export default function CharacterDetail() {
                     <div style={{ fontWeight: "500", marginBottom: "0.25rem" }}>
                       {episode.episode}: {episode.name}
                     </div>
-                  ))}
-                </div>
+                    <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                      {episode.air_date}
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </Suspense>
