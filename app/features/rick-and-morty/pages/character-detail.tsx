@@ -21,7 +21,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     const { data } = await client.query({
       query: GET_CHARACTER,
       variables: { id: characterId },
-      errorPolicy: 'all'
+      errorPolicy: 'all',
+      fetchPolicy: 'cache-first' // Use cache-first to allow proper caching per character ID
     });
 
     return {
@@ -48,17 +49,21 @@ export default function CharacterDetail() {
   const error = useCharactersError();
   const { setSelectedCharacter, clearError } = useCharactersStore();
 
-  // Use SSR character or store character
-  const displayCharacter = character || ssrCharacter;
+  // Always prioritize fresh SSR data, only use store as fallback
+  const displayCharacter = ssrCharacter || character;
 
   useEffect(() => {
     if (typeof document !== "undefined") {
-      // Initialize store with SSR data if no character in store
-      if (!character && ssrCharacter) {
+      // Always update store with fresh SSR data when character ID changes
+      if (ssrCharacter && (ssrCharacter.id !== character?.id)) {
         setSelectedCharacter(ssrCharacter);
       }
+      // Clear store if no character data available
+      else if (!ssrCharacter && !character) {
+        setSelectedCharacter(null);
+      }
     }
-  }, [character, ssrCharacter, setSelectedCharacter]);
+  }, [ssrCharacter, character, characterId, setSelectedCharacter]);
 
   if (error) {
     return (
