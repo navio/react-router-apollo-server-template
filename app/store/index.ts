@@ -1,7 +1,7 @@
 // Export all stores and their hooks
 export * from './app-store';
-export * from './characters-store';
-export * from './internal-store';
+export * from '../features/rick-and-morty/stores/characters-store';
+export * from '../features/health/stores/internal-store';
 export * from './event-bus';
 export * from './types';
 
@@ -12,7 +12,7 @@ export {
   useCharactersLoading,
   useCharactersError,
   useCharactersStore,
-} from './characters-store';
+} from '../features/rick-and-morty/stores/characters-store';
 
 export {
   useHealth,
@@ -22,7 +22,7 @@ export {
   useCreateLoading,
   useInternalError,
   useInternalStore,
-} from './internal-store';
+} from '../features/health/stores/internal-store';
 
 export {
   useOnlineStatus,

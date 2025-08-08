@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useLoaderData, Link } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { GET_HEALTH_CHECK, GET_INTERNAL_DATA, CREATE_INTERNAL_DATA } from "~/lib/internal-queries";
+import { GET_HEALTH_CHECK, GET_INTERNAL_DATA, CREATE_INTERNAL_DATA } from "../services/internal-queries";
 import { createApolloClient } from "~/lib/apollo";
 import { useApolloClient } from "@apollo/client";
 import { 

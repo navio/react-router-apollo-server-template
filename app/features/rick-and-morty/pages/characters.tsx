@@ -1,7 +1,7 @@
 import { Suspense, useEffect } from "react";
 import { useLoaderData, Link, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { GET_CHARACTERS } from "~/services/apollo-service";
+import { GET_CHARACTERS } from "../services/apollo-service";
 import { createApolloClient } from "~/lib/apollo";
 import { useCharactersStore, useCharacters, useCharactersLoading, useCharactersError } from "~/store";
 

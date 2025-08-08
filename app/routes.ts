@@ -2,8 +2,8 @@ import type { RouteConfig } from "@react-router/dev/routes";
 import { index, route } from "@react-router/dev/routes";
 
 export default [
-  index("routes/home.tsx"),
-  route("characters", "routes/characters.tsx"),
-  route("characters/:id", "routes/character-detail.tsx"),
-  route("internal", "routes/internal.tsx"),
+  index("features/home/pages/home.tsx"),
+  route("characters", "features/rick-and-morty/pages/characters.tsx"),
+  route("characters/:id", "features/rick-and-morty/pages/character-detail.tsx"),
+  route("internal", "features/health/pages/internal.tsx"),
 ] satisfies RouteConfig;

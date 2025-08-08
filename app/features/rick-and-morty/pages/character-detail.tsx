@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLoaderData, Link, useParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { useCharactersStore, useSelectedCharacter, useCharactersLoading, useCharactersError } from "~/store";
-import { GET_CHARACTER } from "~/services/apollo-service";
+import { GET_CHARACTER } from "../services/apollo-service";
 import { createApolloClient } from "~/lib/apollo";
 
 export const meta: MetaFunction = () => {
