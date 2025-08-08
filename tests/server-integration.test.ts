@@ -8,11 +8,11 @@ describe('Apollo Server Integration', () => {
     const fs = require('fs');
     const path = require('path');
     
-    const serverIndexPath = path.join(__dirname, '..', 'server', 'index.ts');
+    const serverJsPath = path.join(__dirname, '..', 'server.js');
     const schemaPath = path.join(__dirname, '..', 'server', 'schema', 'typeDefs.ts');
     const resolversPath = path.join(__dirname, '..', 'server', 'resolvers', 'index.ts');
     
-    expect(fs.existsSync(serverIndexPath)).toBe(true);
+    expect(fs.existsSync(serverJsPath)).toBe(true);
     expect(fs.existsSync(schemaPath)).toBe(true);
     expect(fs.existsSync(resolversPath)).toBe(true);
   });
@@ -20,8 +20,7 @@ describe('Apollo Server Integration', () => {
   it('should have proper package.json scripts', () => {
     const packageJson = require('../package.json');
     
-    expect(packageJson.scripts['dev']).toContain('concurrently');
-    expect(packageJson.scripts['dev:server']).toContain('tsx watch server/index.ts');
+    expect(packageJson.scripts['dev']).toContain('npm run build:server && node server.js');
     expect(packageJson.scripts['build:server']).toContain('tsc --project server/tsconfig.json');
   });
 
