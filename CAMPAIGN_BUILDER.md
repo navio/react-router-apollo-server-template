@@ -35,7 +35,9 @@ The Campaign Builder implements a multi-layered validation architecture with cle
 - **Error Mapping** - Server errors mapped to form fields
 
 ### ✅ User Experience
-- **Success Toast** - Visual feedback on successful creation
+- **Global Toast System** - Centralized message notifications with animations
+- **Success Feedback** - Rich success toasts with campaign details
+- **Error Handling** - Network errors shown as persistent toasts
 - **Form Clearing** - Automatic form reset after success
 - **Loading States** - Submit button disabled during processing
 - **Responsive Design** - Works on all screen sizes
@@ -53,28 +55,46 @@ app/features/campaign-builder/
 └── stores/
     └── campaign-store.ts           # Zustand state management
 
+app/components/toast/
+├── Toast.tsx                       # Individual toast component
+├── ToastContainer.tsx              # Toast display manager
+└── index.ts                        # Toast system exports
+
 app/shared/
-└── campaign-schema.ts              # Zod validation schemas
+├── campaign-schema.ts              # Zod validation schemas
+└── stores/
+    └── message-store.ts            # Global message/toast store
 
 server/
 ├── resolvers/index.ts              # GraphQL resolvers
 └── schema/typeDefs.ts             # GraphQL schema
 
 tests/
-└── campaign-builder.test.tsx      # Comprehensive test suite
+├── campaign-builder.test.tsx      # Campaign Builder test suite
+└── toast-system.test.tsx          # Toast system test suite
 ```
 
 ## 🧪 Testing
 
 Comprehensive test coverage including:
+
+### Campaign Builder Tests
 - Form rendering and field validation
 - Cross-field validation (date relationships)
 - Budget validation and formatting
 - Form clearing functionality
 - Error handling scenarios
 
+### Toast System Tests
+- Toast component rendering and dismissal
+- Message store state management
+- Auto-dismiss functionality
+- Multiple message type handling
+- Container positioning and styling
+
 ```bash
 npm test tests/campaign-builder.test.tsx
+npm test tests/toast-system.test.tsx
 ```
 
 ## 🔧 Key Implementation Details
@@ -91,6 +111,39 @@ This separation ensures:
 - Real-time validation doesn't break user experience
 - Data transformations happen at the right time
 - Server validation can enforce additional business rules
+
+### Global Toast System Architecture
+
+The application includes a centralized toast notification system:
+
+**Message Store (`useMessageStore`)**:
+- Zustand-powered global state management
+- Auto-dismiss functionality with configurable timeouts
+- Support for multiple message types (success, error, warning, info)
+- Unique ID system prevents duplicate messages
+
+**Toast Components**:
+- Individual `Toast` component with animations and proper React patterns
+- `ToastContainer` manages positioning and multiple toasts
+- Accessible dismiss buttons and ARIA labels
+- Responsive design with mobile-first approach
+
+**Integration Pattern**:
+```typescript
+import { useMessageStore } from '../../../shared/stores/message-store';
+
+function MyComponent() {
+  const { showSuccess, showError } = useMessageStore();
+  
+  const handleSuccess = () => {
+    showSuccess(
+      'Operation successful!',
+      'Your changes have been saved.',
+      { duration: 4000 }
+    );
+  };
+}
+```
 
 ### Apollo Client Smart Routing
 

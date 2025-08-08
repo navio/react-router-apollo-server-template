@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { useCampaignForm } from '../hooks/useCampaignForm';
 import { CampaignService } from '../services/campaign-service';
 import { useCampaignStore } from '../stores/campaign-store';
+import { useMessageStore } from '../../../shared/stores/message-store';
 
 /**
  * Campaign Builder Component
@@ -40,6 +41,7 @@ export default function CampaignBuilder() {
   } = useCampaignForm();
 
   const { addCampaign } = useCampaignStore();
+  const { showSuccess, showError } = useMessageStore();
 
   const {
     register,
@@ -91,29 +93,12 @@ export default function CampaignBuilder() {
         clearForm();
         setSubmitError(null); // Clear any previous errors
         
-        // Show success message
-        const successDiv = document.createElement('div');
-        successDiv.className = 'fixed top-4 right-4 bg-green-50 border border-green-200 rounded-md p-4 z-50';
-        successDiv.innerHTML = `
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div class="ml-3">
-              <p class="text-sm font-medium text-green-800">Campaign created successfully!</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(successDiv);
-        
-        // Remove success message after 3 seconds
-        setTimeout(() => {
-          if (document.body.contains(successDiv)) {
-            document.body.removeChild(successDiv);
-          }
-        }, 3000);
+        // Show success toast using global message system
+        showSuccess(
+          'Campaign created successfully!',
+          `Campaign "${result.campaign.name}" has been created and saved as a draft.`,
+          { duration: 4000 }
+        );
         
       } else if (result.errors) {
         // Handle backend validation errors - map them to form fields
@@ -130,6 +115,12 @@ export default function CampaignBuilder() {
       }
     } catch (error) {
       console.error('Campaign submission error:', error);
+      // Show error toast for network/unexpected errors
+      showError(
+        'Campaign creation failed',
+        'An unexpected error occurred. Please check your connection and try again.',
+        { duration: 0 } // Don't auto-dismiss errors
+      );
       setSubmitError('An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);

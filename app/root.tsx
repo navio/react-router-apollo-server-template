@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import { AppApolloProvider } from "./lib/apollo-provider";
+import { ToastContainer } from "./components/toast";
 
 import globalStyles from "./styles/globals.css?url";
 
@@ -55,6 +56,7 @@ export default function App() {
   return (
     <AppApolloProvider initialState={apolloState}>
       <Outlet />
+      <ToastContainer />
     </AppApolloProvider>
   );
 }
