@@ -6,11 +6,11 @@ const externalLink = createHttpLink({
   uri: 'https://rickandmortyapi.com/graphql',
 });
 
-// Internal API link (Local Apollo Server)
+// Internal API link (Local Apollo Server - now unified with React Router)
 const internalLink = createHttpLink({
   uri: typeof window === 'undefined' 
-    ? 'http://localhost:4000/graphql'  // SSR
-    : '/api/graphql',  // Client-side (will be proxied)
+    ? 'http://localhost:3000/api/graphql'  // SSR - use the working endpoint
+    : '/api/graphql',  // Client-side (legacy endpoint that works)
 });
 
 const authLink = setContext((_, { headers }) => {
@@ -34,7 +34,7 @@ const directionalLink = setContext((operation) => {
   
   return {
     uri: isInternalOperation 
-      ? (typeof window === 'undefined' ? 'http://localhost:4000/graphql' : '/api/graphql')
+      ? (typeof window === 'undefined' ? 'http://localhost:3000/graphql' : '/graphql')
       : 'https://rickandmortyapi.com/graphql'
   };
 });
@@ -45,8 +45,7 @@ export const createApolloClient = (initialState?: any) => {
     link: from([
       authLink,
       directionalLink,
-      // Default to external link - the directionalLink will override the URI
-      externalLink,
+      externalLink, // Default to Rick and Morty API, directionalLink will override for internal queries
     ]),
     cache: new InMemoryCache().restore(initialState || {}),
     connectToDevTools: typeof window !== 'undefined',

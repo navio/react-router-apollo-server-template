@@ -1,7 +1,8 @@
 import { Suspense, useEffect } from "react";
 import { useLoaderData, Link, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { ApolloService } from "~/services/apollo-service";
+import { GET_CHARACTERS } from "~/services/apollo-service";
+import { createApolloClient } from "~/lib/apollo";
 import { useCharactersStore, useCharacters, useCharactersLoading, useCharactersError } from "~/store";
 
 export const meta: MetaFunction = () => {
@@ -41,19 +42,31 @@ interface CharactersData {
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") || "1");
-
+  
   try {
-    // Use the Apollo service for SSR data fetching
-    const data = await ApolloService.fetchCharacters(page);
+    // Create Apollo client for SSR
+    const client = createApolloClient();
+    const { data } = await client.query({
+      query: GET_CHARACTERS,
+      variables: { page },
+      errorPolicy: 'all'
+    });
 
     return {
-      characters: data.characters,
+      characters: data?.characters?.results || [],
+      info: data?.characters?.info || { count: 0, pages: 1, next: null, prev: null },
       currentPage: page,
-      // We can still provide Apollo state if needed for other operations
-      apolloState: {},
+      apolloState: client.cache.extract(),
     };
   } catch (error) {
-    throw new Response("Failed to fetch characters", { status: 500 });
+    console.error('Error fetching characters:', error);
+    // Return empty data instead of throwing to avoid crashes
+    return {
+      characters: [],
+      info: { count: 0, pages: 1, next: null, prev: null },
+      currentPage: page,
+      apolloState: {},
+    };
   }
 }
 
@@ -139,7 +152,7 @@ function Pagination({ info, currentPage }: { info: any; currentPage: number }) {
 }
 
 export default function Characters() {
-  const { characters: ssrCharacters, currentPage: ssrPage } = useLoaderData<typeof loader>();
+  const { characters: ssrCharacters, info: ssrInfo, currentPage: ssrPage } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   
   // Get Zustand state
@@ -156,27 +169,18 @@ export default function Characters() {
     // Only run on client side
     if (typeof window === 'undefined') return;
     
-    if (characters.items.length === 0 || characters.pagination.currentPage !== currentPage) {
-      // Use SSR data for initial load, then fetch for subsequent navigations
-      if (characters.items.length === 0 && ssrCharacters) {
+    if (characters.length === 0) {
+      // Use SSR data for initial load
+      if (ssrCharacters && ssrCharacters.length > 0) {
         // Initialize store with SSR data
         useCharactersStore.setState({
-          characters: {
-            items: ssrCharacters.results,
-            pagination: {
-              currentPage: ssrPage,
-              totalPages: ssrCharacters.info.pages,
-              hasNext: ssrCharacters.info.next !== null,
-              hasPrev: ssrCharacters.info.prev !== null,
-            },
-          },
+          characters: ssrCharacters,
+          loading: false,
+          error: null,
         });
-      } else {
-        // Client-side navigation - fetch from store
-        fetchCharacters(currentPage);
       }
     }
-  }, [currentPage, ssrCharacters, ssrPage, characters.items.length, fetchCharacters]);
+  }, [currentPage, ssrCharacters, ssrPage, characters.length]);
 
   // Error display
   if (error) {
@@ -215,10 +219,7 @@ export default function Characters() {
     );
   }
 
-  const displayData = characters.items.length > 0 ? characters : { 
-    items: ssrCharacters?.results || [], 
-    pagination: characters.pagination 
-  };
+  const displayData = characters.length > 0 ? characters : ssrCharacters || [];
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
@@ -256,16 +257,16 @@ export default function Characters() {
           opacity: isLoading ? 0.5 : 1,
           transition: "opacity 0.2s"
         }}>
-          {displayData.items.map((character: Character) => (
+          {displayData.map((character: Character) => (
             <CharacterCard key={character.id} character={character} />
           ))}
         </div>
 
         <Pagination 
           info={{
-            pages: characters.pagination.totalPages,
-            next: characters.pagination.hasNext ? currentPage + 1 : null,
-            prev: characters.pagination.hasPrev ? currentPage - 1 : null,
+            pages: ssrInfo.pages || 1,
+            next: ssrInfo.next ? currentPage + 1 : null,
+            prev: ssrInfo.prev ? currentPage - 1 : null,
           }} 
           currentPage={currentPage} 
         />

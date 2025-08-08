@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useLoaderData, Link } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { ApolloService } from "~/services/apollo-service";
+import { GET_HEALTH_CHECK, GET_INTERNAL_DATA, CREATE_INTERNAL_DATA } from "~/lib/internal-queries";
+import { createApolloClient } from "~/lib/apollo";
+import { useApolloClient } from "@apollo/client";
 import { 
   useInternalStore, 
   useHealth, 
@@ -43,18 +45,36 @@ interface LoaderData {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   try {
-    const [health, internalData] = await Promise.all([
-      ApolloService.fetchHealthCheck(),
-      ApolloService.fetchInternalData(),
+    // Create Apollo client for internal API calls
+    const client = createApolloClient();
+    
+    // Fetch health and internal data from our internal GraphQL server
+    const [healthResult, internalDataResult] = await Promise.all([
+      client.query({ 
+        query: GET_HEALTH_CHECK, 
+        errorPolicy: 'all',
+        context: { uri: '/graphql' } // Ensure it uses our internal server
+      }),
+      client.query({ 
+        query: GET_INTERNAL_DATA, 
+        errorPolicy: 'all',
+        context: { uri: '/graphql' }
+      }),
     ]);
 
     return {
-      health,
-      internalData,
+      health: healthResult.data?.health || null,
+      internalData: internalDataResult.data?.internalData || [],
+      apolloState: client.cache.extract(),
     };
   } catch (error) {
     console.error('Internal API error:', error);
-    throw new Response("Failed to fetch internal data", { status: 500 });
+    // Return empty data instead of throwing to avoid crashes
+    return {
+      health: null,
+      internalData: [],
+      apolloState: {},
+    };
   }
 }
 
@@ -142,8 +162,28 @@ function CreateDataForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const createLoading = useCreateLoading();
   const error = useInternalError();
-  const { createInternalData, clearError } = useInternalStore();
+  const { clearError, setCreateLoading, setError } = useInternalStore();
   const { addNotification } = useAppStore();
+  const client = useApolloClient();
+
+  const createInternalData = async ({ name, value }: { name: string; value: string }) => {
+    try {
+      setCreateLoading(true);
+      setError(null);
+      const result = await client.mutate({
+        mutation: CREATE_INTERNAL_DATA,
+        variables: { name, value },
+        errorPolicy: 'all'
+      });
+      return result.data?.createInternalData;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create internal data';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setCreateLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -157,20 +197,12 @@ function CreateDataForm() {
       setSuccessMessage(`Successfully created: ${name}`);
       
       // Show notification
-      addNotification({
-        type: 'success',
-        message: `Created internal data: ${name}`,
-        duration: 3000,
-      });
+      addNotification(`Created internal data: ${name}`);
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      addNotification({
-        type: 'error',
-        message: 'Failed to create internal data',
-        duration: 5000,
-      });
+      addNotification('Failed to create internal data');
     }
   };
 
@@ -278,8 +310,42 @@ export default function Internal() {
   const healthLoading = useHealthLoading();
   const dataLoading = useDataLoading();
   const error = useInternalError();
-  const { fetchHealth, fetchInternalData, clearError } = useInternalStore();
+  const { clearError, setHealth, setInternalData, setHealthLoading, setDataLoading } = useInternalStore();
   const { on } = useEventBus();
+  const client = useApolloClient();
+
+  // Fetch functions using Apollo client
+  const fetchHealth = async () => {
+    try {
+      setHealthLoading(true);
+      const result = await client.query({
+        query: GET_HEALTH_CHECK,
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'all'
+      });
+      setHealth(result.data?.health || null);
+    } catch (error) {
+      console.error('Failed to fetch health:', error);
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
+  const fetchInternalData = async () => {
+    try {
+      setDataLoading(true);
+      const result = await client.query({
+        query: GET_INTERNAL_DATA,
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'all'
+      });
+      setInternalData(result.data?.internalData || []);
+    } catch (error) {
+      console.error('Failed to fetch internal data:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
   
   // Initialize store with SSR data and set up event listeners
   useEffect(() => {
@@ -298,7 +364,6 @@ export default function Internal() {
     const unsubscribeDataUpdated = on('DATA_UPDATED', (event) => {
       if (event.payload && typeof event.payload === 'object' && 'type' in event.payload && event.payload.type === 'internal-data-created') {
         // Data was updated, could refresh if needed
-        console.log('Internal data updated:', event.payload);
       }
     });
     
