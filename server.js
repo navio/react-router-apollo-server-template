@@ -1,6 +1,6 @@
 import { createRequestHandler } from "@react-router/express";
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
+import { expressMiddleware } from '@as-integrations/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import compression from "compression";
@@ -10,8 +10,8 @@ import cors from 'cors';
 import morgan from "morgan";
 
 // Import GraphQL schema and resolvers from built server files
-const { typeDefs } = await import('./build/server/schema/typeDefs.js');
-const { resolvers } = await import('./build/server/resolvers/index.js');
+const { typeDefs } = await import('./build/server/server/schema/typeDefs.js');
+const { resolvers } = await import('./build/server/server/resolvers/index.js');
 
 const viteDevServer =
   process.env.NODE_ENV === "production"

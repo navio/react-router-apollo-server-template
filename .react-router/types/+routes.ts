@@ -24,12 +24,15 @@ type Pages = {
   "/internal": {
     params: {};
   };
+  "/campaign-builder": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/characters" | "/characters/:id" | "/internal";
+    page: "/" | "/characters" | "/characters/:id" | "/internal" | "/campaign-builder";
   };
   "features/home/pages/home.tsx": {
     id: "features/home/pages/home";
@@ -46,5 +49,9 @@ type RouteFiles = {
   "features/health/pages/internal.tsx": {
     id: "features/health/pages/internal";
     page: "/internal";
+  };
+  "features/campaign-builder/pages/campaign-builder.tsx": {
+    id: "features/campaign-builder/pages/campaign-builder";
+    page: "/campaign-builder";
   };
 };

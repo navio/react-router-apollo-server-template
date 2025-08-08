@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../build/server",
-    "rootDir": ".",
+    "rootDir": "..",
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -19,11 +19,14 @@
     "types": ["node"]
   },
   "include": [
-    "**/*.ts"
+    "./**/*.ts",
+    "../app/shared/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "../app",
+    "../app/**/*.ts",
+    "../app/**/*.tsx",
+    "!../app/shared/**/*.ts",
     "../tests",
     "../build"
   ]

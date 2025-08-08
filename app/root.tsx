@@ -9,7 +9,10 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import { AppApolloProvider } from "./lib/apollo-provider";
 
+import globalStyles from "./styles/globals.css?url";
+
 export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: globalStyles },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",

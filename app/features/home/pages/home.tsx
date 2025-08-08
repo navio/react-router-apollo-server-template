@@ -45,9 +45,25 @@ export default function Index() {
                 borderRadius: "0.25rem",
                 display: "inline-block",
                 transition: "all 0.2s",
+                marginRight: "1rem"
               }}
             >
               Internal GraphQL API
+            </Link>
+            <Link
+              to="/campaign-builder"
+              style={{
+                color: "#8b5cf6",
+                textDecoration: "none",
+                fontSize: "1.1rem",
+                padding: "0.5rem 1rem",
+                border: "1px solid #8b5cf6",
+                borderRadius: "0.25rem",
+                display: "inline-block",
+                transition: "all 0.2s",
+              }}
+            >
+              Campaign Builder
             </Link>
           </li>
         </ul>
@@ -61,6 +77,7 @@ export default function Index() {
           <li>✅ Vite bundler</li>
           <li>✅ TypeScript support</li>
           <li>✅ Jest testing setup</li>
+          <li>✅ Campaign Builder with React Hook Form & Zod</li>
         </ul>
       </div>
     </div>
