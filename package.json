@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run build:server && node server.js",
-    "build": "npm run build:server && react-router build",
+    "build": "npm run build:server && npx react-router build",
     "build:server": "tsc --project server/tsconfig.json",
     "start": "cross-env NODE_ENV=production node server.js",
     "test": "jest",
@@ -30,11 +30,12 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.62.0",
     "react-router": "^7.0.1",
+    "react-router-dom": "^7.8.0",
     "zod": "^4.0.15",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.0.1",
+    "@react-router/dev": "^7.8.0",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",

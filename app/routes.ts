@@ -1,10 +1,31 @@
 import type { RouteConfig } from "@react-router/dev/routes";
-import { index, route } from "@react-router/dev/routes";
+import { baseRoutes } from "./router/routes";
 
-export default [
-  index("features/home/pages/home.tsx"),
-  route("characters", "features/rick-and-morty/pages/characters.tsx"),
-  route("characters/:id", "features/rick-and-morty/pages/character-detail.tsx"),
-  route("internal", "features/health/pages/internal.tsx"),
-  route("campaign-builder", "features/campaign-builder/pages/campaign-builder.tsx"),
-] satisfies RouteConfig;
+/**
+ * Main Route Configuration
+ * 
+ * This file exports the route configuration for the application.
+ * Routes are now defined programmatically in ./router/routes.tsx
+ * providing better developer experience and maintainability.
+ * 
+ * Available configuration options:
+ * 1. baseRoutes - Simple flat route structure
+ * 2. buildFeatureRoutes() - Feature-organized routes using builder pattern
+ * 3. buildAdvancedRoutes() - Grouped routes with prefixes
+ * 4. RouteRegistry.getRoutes() - Dynamic route management
+ * 
+ * Current configuration: Using base routes for simplicity
+ * Change this to experiment with different route organizations
+ */
+
+// Option 1: Use base routes (current)  
+export default baseRoutes satisfies RouteConfig;
+
+// Option 2: Use feature-based builder pattern
+// export default buildFeatureRoutes() satisfies RouteConfig;
+
+// Option 3: Use advanced grouping with prefixes
+// export default buildAdvancedRoutes() satisfies RouteConfig;
+
+// Option 4: Use dynamic route registry
+// export default RouteRegistry.getRoutes() satisfies RouteConfig;

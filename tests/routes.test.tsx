@@ -1,34 +1,53 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen } from '@testing-library/react';
-import Index from '../app/features/home/pages/home';
+import { baseRoutes, getNavigationRoutes, getRouteMetadata, RouteBuilder } from '../app/router/routes';
 
-// Mock React Router Link component
-jest.mock('react-router', () => ({
-  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
-    <a href={to}>{children}</a>
-  ),
-}));
-
-describe('Home Route', () => {
-  it('renders welcome message', () => {
-    render(<Index />);
-    
-    expect(screen.getByText('Welcome to React Router + Apollo SSR')).toBeInTheDocument();
+describe('Router Configuration', () => {
+  it('provides base routes configuration', () => {
+    expect(baseRoutes).toBeDefined();
+    expect(baseRoutes.length).toBeGreaterThan(0);
   });
 
-  it('displays feature list', () => {
-    render(<Index />);
-    
-    expect(screen.getByText('✅ Server-Side Rendering (SSR)')).toBeInTheDocument();
-    expect(screen.getByText('✅ Apollo Client with GraphQL')).toBeInTheDocument();
-    expect(screen.getByText('✅ React Router 7')).toBeInTheDocument();
+  it('provides route metadata', () => {
+    const homeMetadata = getRouteMetadata('/');
+    expect(homeMetadata).toBeDefined();
+    expect(homeMetadata?.title).toBe('Home');
+    expect(homeMetadata?.icon).toBe('🏠');
   });
 
-  it('renders navigation link', () => {
-    render(<Index />);
+  it('provides navigation routes excluding hidden ones', () => {
+    const navRoutes = getNavigationRoutes();
+    expect(navRoutes.length).toBeGreaterThan(0);
     
-    expect(screen.getByText('View Rick and Morty Characters')).toBeInTheDocument();
+    // Check that hidden routes (like character detail) are excluded
+    const hiddenRoute = navRoutes.find(route => route.path === '/characters/:id');
+    expect(hiddenRoute).toBeUndefined();
+    
+    // Check that visible routes are included
+    const homeRoute = navRoutes.find(route => route.path === '/');
+    expect(homeRoute).toBeDefined();
+  });
+
+  it('route builder creates routes programmatically', () => {
+    const builder = new RouteBuilder();
+    const routes = builder
+      .addIndex('test-home.tsx')
+      .addRoute('test', 'test-component.tsx')
+      .build();
+    
+    expect(routes.length).toBe(2);
+  });
+
+  it('configuration-based routing is working', () => {
+    // This test verifies our configuration-based routing system is functional
+    // by checking that our route metadata and configuration work correctly
+    expect(baseRoutes.length).toBeGreaterThan(0);
+    expect(getNavigationRoutes().length).toBeGreaterThan(0);
+    
+    // Verify specific routes exist
+    const charactersMetadata = getRouteMetadata('/characters');
+    expect(charactersMetadata).toBeDefined();
+    expect(charactersMetadata?.title).toBe('Characters');
   });
 });
