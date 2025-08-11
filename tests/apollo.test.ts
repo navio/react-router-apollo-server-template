@@ -4,10 +4,10 @@
 
 describe('Apollo Client Configuration', () => {
   it('should pass basic test', () => {
-    expect(true).toBe(true);
-  });
+    expect(true).toBe(true)
+  })
 
   it('should have fetch available in test environment', () => {
-    expect(global.fetch).toBeDefined();
-  });
-});
+    expect(global.fetch).toBeDefined()
+  })
+})

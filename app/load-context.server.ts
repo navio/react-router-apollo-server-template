@@ -1,12 +1,12 @@
-import { createApolloClient } from "./lib/apollo";
+import { createApolloClient } from './lib/apollo'
 
 export function getLoadContext() {
-  const apolloClient = createApolloClient();
-  
+  const apolloClient = createApolloClient()
+
   return {
     apolloClient,
     apolloState: apolloClient.cache.extract(),
-  };
+  }
 }
 
-export type LoadContext = ReturnType<typeof getLoadContext>;
+export type LoadContext = ReturnType<typeof getLoadContext>

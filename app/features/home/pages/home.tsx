@@ -1,13 +1,13 @@
-import type { MetaFunction } from "react-router";
-import { Link } from "react-router";
-import { Navigation, Breadcrumbs } from "../../../components/navigation";
+import type { MetaFunction } from 'react-router'
+import { Link } from 'react-router'
+import { Navigation, Breadcrumbs } from '../../../components/navigation'
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "React Router + Apollo SSR" },
-    { name: "description", content: "Welcome to React Router with Apollo GraphQL SSR!" },
-  ];
-};
+    { title: 'React Router + Apollo SSR' },
+    { name: 'description', content: 'Welcome to React Router with Apollo GraphQL SSR!' },
+  ]
+}
 
 export default function Index() {
   return (
@@ -17,9 +17,7 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-gray-900">
-                React Router + Apollo SSR
-              </h1>
+              <h1 className="text-xl font-semibold text-gray-900">React Router + Apollo SSR</h1>
             </div>
             <Navigation className="hidden md:flex" />
           </div>
@@ -39,8 +37,9 @@ export default function Index() {
             Welcome to React Router + Apollo SSR
           </h2>
           <p className="text-lg text-gray-600 mb-8 max-w-3xl">
-            This is a demo application showcasing server-side rendering with React Router 7 and Apollo Client.
-            The application now features programmatic route configuration instead of file-based routing.
+            This is a demo application showcasing server-side rendering with React Router 7 and
+            Apollo Client. The application now features programmatic route configuration instead of
+            file-based routing.
           </p>
 
           {/* Quick Navigation Cards */}
@@ -87,9 +86,7 @@ export default function Index() {
 
           {/* Features Section */}
           <div className="bg-gray-50 rounded-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              ✨ Features & Architecture
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">✨ Features & Architecture</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
@@ -132,5 +129,5 @@ export default function Index() {
         </div>
       </main>
     </div>
-  );
+  )
 }

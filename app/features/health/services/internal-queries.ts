@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from '@apollo/client'
 
 export const GET_HEALTH_CHECK = gql`
   query GetHealthCheck {
@@ -9,7 +9,7 @@ export const GET_HEALTH_CHECK = gql`
       version
     }
   }
-`;
+`
 
 export const GET_INTERNAL_DATA = gql`
   query GetInternalData {
@@ -20,7 +20,7 @@ export const GET_INTERNAL_DATA = gql`
       createdAt
     }
   }
-`;
+`
 
 export const CREATE_INTERNAL_DATA = gql`
   mutation CreateInternalData($name: String!, $value: String!) {
@@ -31,4 +31,4 @@ export const CREATE_INTERNAL_DATA = gql`
       createdAt
     }
   }
-`;
+`

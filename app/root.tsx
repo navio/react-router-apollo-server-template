@@ -1,35 +1,28 @@
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-  useLoaderData,
-} from "react-router";
-import type { LinksFunction, LoaderFunctionArgs } from "react-router";
-import { AppApolloProvider } from "./lib/apollo-provider";
-import { ToastContainer } from "./components/toast";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from 'react-router'
+import type { LinksFunction, LoaderFunctionArgs } from 'react-router'
+import { AppApolloProvider } from './lib/apollo-provider'
+import { ToastContainer } from './components/toast'
 
-import globalStyles from "./styles/globals.css?url";
+import globalStyles from './styles/globals.css?url'
 
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: globalStyles },
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: 'stylesheet', href: globalStyles },
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous',
   },
   {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
-];
+]
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return {
     apolloState: context?.apolloState || {},
-  };
+  }
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -47,16 +40,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }
 
 export default function App() {
-  const { apolloState } = useLoaderData<typeof loader>();
-  
+  const { apolloState } = useLoaderData<typeof loader>()
+
   return (
     <AppApolloProvider initialState={apolloState}>
       <Outlet />
       <ToastContainer />
     </AppApolloProvider>
-  );
+  )
 }

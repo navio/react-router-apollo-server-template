@@ -6,18 +6,15 @@ export default {
   moduleNameMapper: {
     '^~/(.*)$': '<rootDir>/app/$1',
   },
-  testMatch: [
-    '<rootDir>/app/**/*.test.{ts,tsx}',
-    '<rootDir>/tests/**/*.test.{ts,tsx}',
-  ],
-  collectCoverageFrom: [
-    'app/**/*.{ts,tsx}',
-    '!app/**/*.d.ts',
-  ],
+  testMatch: ['<rootDir>/app/**/*.test.{ts,tsx}', '<rootDir>/tests/**/*.test.{ts,tsx}'],
+  collectCoverageFrom: ['app/**/*.{ts,tsx}', '!app/**/*.d.ts'],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      useESM: true,
-    }],
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
   },
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
-};
+}

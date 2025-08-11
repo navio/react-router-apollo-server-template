@@ -1,13 +1,13 @@
-import { gql } from '@apollo/client';
-import { ApolloClient } from '@apollo/client';
-import { CampaignFormData } from '../../../shared/campaign-schema';
+import { gql } from '@apollo/client'
+import { ApolloClient } from '@apollo/client'
+import { CampaignFormData } from '../../../shared/campaign-schema'
 
 /**
  * Campaign Service - GraphQL operations for campaign management
- * 
+ *
  * Provides a clean interface for campaign CRUD operations using Apollo Client.
  * Handles data transformation between client types and GraphQL schema requirements.
- * 
+ *
  * Architecture Decision: Service layer abstraction
  * - Isolates GraphQL operations from UI components
  * - Provides consistent error handling across all operations
@@ -34,7 +34,7 @@ export const CREATE_CAMPAIGN = gql`
       }
     }
   }
-`;
+`
 
 export const UPDATE_CAMPAIGN = gql`
   mutation UpdateCampaign($id: ID!, $input: CampaignInput!) {
@@ -55,7 +55,7 @@ export const UPDATE_CAMPAIGN = gql`
       }
     }
   }
-`;
+`
 
 export const GET_CAMPAIGNS = gql`
   query GetCampaigns {
@@ -69,7 +69,7 @@ export const GET_CAMPAIGNS = gql`
       createdAt
     }
   }
-`;
+`
 
 export const GET_CAMPAIGN = gql`
   query GetCampaign($id: ID!) {
@@ -83,31 +83,31 @@ export const GET_CAMPAIGN = gql`
       createdAt
     }
   }
-`;
+`
 
 export const DELETE_CAMPAIGN = gql`
   mutation DeleteCampaign($id: ID!) {
     deleteCampaign(id: $id)
   }
-`;
+`
 
 export interface CampaignValidationError {
-  field: string;
-  message: string;
+  field: string
+  message: string
 }
 
 export interface CampaignMutationResult {
-  success: boolean;
+  success: boolean
   campaign?: {
-    id: string;
-    name: string;
-    budget: number;
-    startDate: string;
-    endDate: string;
-    status: string;
-    createdAt: string;
-  };
-  errors?: CampaignValidationError[];
+    id: string
+    name: string
+    budget: number
+    startDate: string
+    endDate: string
+    status: string
+    createdAt: string
+  }
+  errors?: CampaignValidationError[]
 }
 
 export class CampaignService {
@@ -125,22 +125,27 @@ export class CampaignService {
             endDate: campaignData.endDate.toISOString(),
           },
         },
-      });
+      })
 
-      return data.createCampaign;
+      return data.createCampaign
     } catch (error) {
-      console.error('Campaign creation failed:', error);
+      console.error('Campaign creation failed:', error)
       return {
         success: false,
-        errors: [{
-          field: 'general',
-          message: 'Network error occurred while creating campaign',
-        }],
-      };
+        errors: [
+          {
+            field: 'general',
+            message: 'Network error occurred while creating campaign',
+          },
+        ],
+      }
     }
   }
 
-  async updateCampaign(id: string, campaignData: CampaignFormData): Promise<CampaignMutationResult> {
+  async updateCampaign(
+    id: string,
+    campaignData: CampaignFormData
+  ): Promise<CampaignMutationResult> {
     try {
       const { data } = await this.apolloClient.mutate({
         mutation: UPDATE_CAMPAIGN,
@@ -153,18 +158,20 @@ export class CampaignService {
             endDate: campaignData.endDate.toISOString(),
           },
         },
-      });
+      })
 
-      return data.updateCampaign;
+      return data.updateCampaign
     } catch (error) {
-      console.error('Campaign update failed:', error);
+      console.error('Campaign update failed:', error)
       return {
         success: false,
-        errors: [{
-          field: 'general',
-          message: 'Network error occurred while updating campaign',
-        }],
-      };
+        errors: [
+          {
+            field: 'general',
+            message: 'Network error occurred while updating campaign',
+          },
+        ],
+      }
     }
   }
 
@@ -173,12 +180,12 @@ export class CampaignService {
       const { data } = await this.apolloClient.mutate({
         mutation: DELETE_CAMPAIGN,
         variables: { id },
-      });
+      })
 
-      return data.deleteCampaign;
+      return data.deleteCampaign
     } catch (error) {
-      console.error('Campaign deletion failed:', error);
-      return false;
+      console.error('Campaign deletion failed:', error)
+      return false
     }
   }
 
@@ -187,12 +194,12 @@ export class CampaignService {
       const { data } = await this.apolloClient.query({
         query: GET_CAMPAIGNS,
         fetchPolicy: 'network-only',
-      });
+      })
 
-      return data.campaigns;
+      return data.campaigns
     } catch (error) {
-      console.error('Failed to fetch campaigns:', error);
-      return [];
+      console.error('Failed to fetch campaigns:', error)
+      return []
     }
   }
 
@@ -202,12 +209,12 @@ export class CampaignService {
         query: GET_CAMPAIGN,
         variables: { id },
         fetchPolicy: 'network-only',
-      });
+      })
 
-      return data.campaign;
+      return data.campaign
     } catch (error) {
-      console.error('Failed to fetch campaign:', error);
-      return null;
+      console.error('Failed to fetch campaign:', error)
+      return null
     }
   }
 }
