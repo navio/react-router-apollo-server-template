@@ -1,12 +1,12 @@
-import { serverCampaignSchema } from '../../shared/campaign-schema.js';
+import { serverCampaignSchema } from '../../shared/campaign-schema.js'
 
 /**
  * GraphQL Resolvers for Apollo Server
- * 
+ *
  * Provides resolvers for:
  * - Health checks and internal data (demo purposes)
  * - Campaign CRUD operations with validation
- * 
+ *
  * Architecture Decisions:
  * - In-memory storage for demo (would be database in production)
  * - Server-side Zod validation for data integrity
@@ -15,38 +15,38 @@ import { serverCampaignSchema } from '../../shared/campaign-schema.js';
  */
 
 interface InternalDataItem {
-  id: string;
-  name: string;
-  value: string;
-  createdAt: string;
+  id: string
+  name: string
+  value: string
+  createdAt: string
 }
 
 interface Campaign {
-  id: string;
-  name: string;
-  budget: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-  createdAt: string;
+  id: string
+  name: string
+  budget: number
+  startDate: string
+  endDate: string
+  status: string
+  createdAt: string
 }
 
 interface CampaignInput {
-  name: string;
-  budget: number;
-  startDate: string;
-  endDate: string;
+  name: string
+  budget: number
+  startDate: string
+  endDate: string
 }
 
 interface CampaignValidationError {
-  field: string;
-  message: string;
+  field: string
+  message: string
 }
 
 interface CampaignResult {
-  success: boolean;
-  campaign?: Campaign;
-  errors?: CampaignValidationError[];
+  success: boolean
+  campaign?: Campaign
+  errors?: CampaignValidationError[]
 }
 
 // In-memory storage for demo purposes
@@ -64,10 +64,10 @@ const internalData: InternalDataItem[] = [
     value: 'enabled',
     createdAt: new Date().toISOString(),
   },
-];
+]
 
 // Campaign storage - in production this would be a database
-const campaigns: Campaign[] = [];
+const campaigns: Campaign[] = []
 
 export const resolvers = {
   Query: {
@@ -77,13 +77,13 @@ export const resolvers = {
       timestamp: new Date().toISOString(),
       version: '1.0.0',
     }),
-    
+
     internalData: () => internalData,
-    
+
     campaigns: () => campaigns,
-    
+
     campaign: (_: any, { id }: { id: string }) => {
-      return campaigns.find(campaign => campaign.id === id);
+      return campaigns.find((campaign) => campaign.id === id)
     },
   },
 
@@ -94,15 +94,15 @@ export const resolvers = {
         name,
         value,
         createdAt: new Date().toISOString(),
-      };
-      
-      internalData.push(newItem);
-      return newItem;
+      }
+
+      internalData.push(newItem)
+      return newItem
     },
 
     /**
      * Create a new campaign with server-side validation
-     * 
+     *
      * Flow:
      * 1. Convert string dates to Date objects for validation
      * 2. Validate using server schema (includes profanity check)
@@ -112,19 +112,19 @@ export const resolvers = {
     createCampaign: (_: any, { input }: { input: CampaignInput }): CampaignResult => {
       try {
         // Log for development - remove in production
-        console.log('🚀 Creating campaign with input:', JSON.stringify(input, null, 2));
-        
+        console.log('🚀 Creating campaign with input:', JSON.stringify(input, null, 2))
+
         // Prepare data for validation (convert strings to appropriate types)
         const validationData = {
           name: input.name,
           budget: input.budget,
           startDate: new Date(input.startDate),
           endDate: new Date(input.endDate),
-        };
+        }
 
         // Validate with server schema (includes business rules like profanity filtering)
-        const validatedData = serverCampaignSchema.parse(validationData);
-        
+        const validatedData = serverCampaignSchema.parse(validationData)
+
         const newCampaign: Campaign = {
           id: String(campaigns.length + 1),
           name: validatedData.name,
@@ -133,53 +133,60 @@ export const resolvers = {
           endDate: validatedData.endDate.toISOString(),
           status: 'draft',
           createdAt: new Date().toISOString(),
-        };
-        
-        campaigns.push(newCampaign);
-        
+        }
+
+        campaigns.push(newCampaign)
+
         return {
           success: true,
           campaign: newCampaign,
-        };
+        }
       } catch (error: any) {
         // Log errors for debugging - consider using proper logging service in production
-        console.error('❌ Campaign creation error:', error);
-        
+        console.error('❌ Campaign creation error:', error)
+
         // Handle Zod validation errors
         if (error.name === 'ZodError') {
           const validationErrors: CampaignValidationError[] = error.issues.map((issue: any) => ({
             field: issue.path.join('.'),
             message: issue.message,
-          }));
-          
+          }))
+
           return {
             success: false,
             errors: validationErrors,
-          };
+          }
         }
-        
+
         // Handle unexpected errors
         return {
           success: false,
-          errors: [{
-            field: 'general',
-            message: 'An unexpected error occurred. Please try again.',
-          }],
-        };
+          errors: [
+            {
+              field: 'general',
+              message: 'An unexpected error occurred. Please try again.',
+            },
+          ],
+        }
       }
     },
 
-    updateCampaign: (_: any, { id, input }: { id: string; input: CampaignInput }): CampaignResult => {
+    updateCampaign: (
+      _: any,
+      { id, input }: { id: string; input: CampaignInput }
+    ): CampaignResult => {
       try {
-        const campaignIndex = campaigns.findIndex(campaign => campaign.id === id);
+        const campaignIndex = campaigns.findIndex((campaign) => campaign.id === id)
         if (campaignIndex === -1) {
           return {
             success: false,
-            errors: [{
-              field: 'id',
-              message: 'Campaign not found',
-            }],
-          };
+            errors: [
+              {
+                field: 'id',
+                message: 'Campaign not found',
+              },
+            ],
+          }
         }
 
         const validationData = {
@@ -187,55 +194,57 @@ export const resolvers = {
           budget: input.budget,
           startDate: new Date(input.startDate),
           endDate: new Date(input.endDate),
-        };
+        }
 
-        const validatedData = serverCampaignSchema.parse(validationData);
-        
+        const validatedData = serverCampaignSchema.parse(validationData)
+
         const updatedCampaign: Campaign = {
           ...campaigns[campaignIndex],
           name: validatedData.name,
           budget: validatedData.budget,
           startDate: validatedData.startDate.toISOString(),
           endDate: validatedData.endDate.toISOString(),
-        };
-        
-        campaigns[campaignIndex] = updatedCampaign;
-        
+        }
+
+        campaigns[campaignIndex] = updatedCampaign
+
         return {
           success: true,
           campaign: updatedCampaign,
-        };
+        }
       } catch (error: any) {
         if (error.name === 'ZodError') {
           const validationErrors: CampaignValidationError[] = error.issues.map((issue: any) => ({
             field: issue.path.join('.'),
             message: issue.message,
-          }));
-          
+          }))
+
           return {
             success: false,
             errors: validationErrors,
-          };
+          }
         }
-        
+
         return {
           success: false,
-          errors: [{
-            field: 'general',
-            message: 'An unexpected error occurred',
-          }],
-        };
+          errors: [
+            {
+              field: 'general',
+              message: 'An unexpected error occurred',
+            },
+          ],
+        }
       }
     },
 
     deleteCampaign: (_: any, { id }: { id: string }): boolean => {
-      const campaignIndex = campaigns.findIndex(campaign => campaign.id === id);
+      const campaignIndex = campaigns.findIndex((campaign) => campaign.id === id)
       if (campaignIndex === -1) {
-        return false;
+        return false
       }
-      
-      campaigns.splice(campaignIndex, 1);
-      return true;
+
+      campaigns.splice(campaignIndex, 1)
+      return true
     },
   },
-};
+}

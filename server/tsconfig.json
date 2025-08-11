@@ -18,10 +18,7 @@
     "declaration": false,
     "types": ["node"]
   },
-  "include": [
-    "./**/*.ts",
-    "../app/shared/**/*.ts"
-  ],
+  "include": ["./**/*.ts", "../app/shared/**/*.ts"],
   "exclude": [
     "node_modules",
     "../app/**/*.ts",

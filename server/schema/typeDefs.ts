@@ -54,4 +54,4 @@ export const typeDefs = `#graphql
     updateCampaign(id: ID!, input: CampaignInput!): CampaignResult!
     deleteCampaign(id: ID!): Boolean!
   }
-`;
+`

@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom'
 
 // Mock fetch globally
 global.fetch = jest.fn(() =>
@@ -7,12 +7,12 @@ global.fetch = jest.fn(() =>
     ok: true,
     status: 200,
   })
-) as jest.Mock;
+) as jest.Mock
 
 // Mock TextEncoder/TextDecoder for jsdom
 if (typeof global.TextEncoder === 'undefined') {
-  global.TextEncoder = require('util').TextEncoder;
+  global.TextEncoder = require('util').TextEncoder
 }
 if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = require('util').TextDecoder;
+  global.TextDecoder = require('util').TextDecoder
 }

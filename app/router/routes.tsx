@@ -1,9 +1,9 @@
-import type { RouteConfig, RouteConfigEntry } from "@react-router/dev/routes";
-import { index, route, layout, prefix } from "@react-router/dev/routes";
+import type { RouteConfig, RouteConfigEntry } from '@react-router/dev/routes'
+import { index, route, layout, prefix } from '@react-router/dev/routes'
 
 /**
  * Programmatic Router Configuration for React Router v7
- * 
+ *
  * This approach provides:
  * - Centralized route configuration in code rather than file-system based
  * - Full TypeScript support for route definitions
@@ -11,7 +11,7 @@ import { index, route, layout, prefix } from "@react-router/dev/routes";
  * - Dynamic route registration capabilities
  * - Better IDE intellisense for route structure
  * - Route metadata and navigation utilities
- * 
+ *
  * Architecture Decision: Configuration over Convention
  * - Explicit route definitions instead of file-system based routing
  * - Better control over route hierarchy and nested layouts
@@ -24,60 +24,60 @@ import { index, route, layout, prefix } from "@react-router/dev/routes";
  * Maps URL paths to component file locations
  */
 export const baseRoutes: RouteConfigEntry[] = [
-  index("features/home/pages/home.tsx"),
-  route("characters", "features/rick-and-morty/pages/characters.tsx"),
-  route("characters/:id", "features/rick-and-morty/pages/character-detail.tsx"),
-  route("internal", "features/health/pages/internal.tsx"),
-  route("campaign-builder", "features/campaign-builder/pages/campaign-builder.tsx"),
-];
+  index('features/home/pages/home.tsx'),
+  route('characters', 'features/rick-and-morty/pages/characters.tsx'),
+  route('characters/:id', 'features/rick-and-morty/pages/character-detail.tsx'),
+  route('internal', 'features/health/pages/internal.tsx'),
+  route('campaign-builder', 'features/campaign-builder/pages/campaign-builder.tsx'),
+]
 
 /**
  * Route Registry for Dynamic Route Management
- * 
+ *
  * Utility class for managing routes programmatically.
  * Useful for adding routes dynamically based on user permissions,
  * feature flags, or other runtime conditions.
  */
 export class RouteRegistry {
-  private static routes: RouteConfigEntry[] = [...baseRoutes];
+  private static routes: RouteConfigEntry[] = [...baseRoutes]
 
   /**
    * Get all registered routes
    */
   static getRoutes(): RouteConfigEntry[] {
-    return [...this.routes];
+    return [...this.routes]
   }
 
   /**
    * Add a new route dynamically
    */
   static addRoute(newRoute: RouteConfigEntry): void {
-    this.routes.push(newRoute);
+    this.routes.push(newRoute)
   }
 
   /**
    * Remove a route by checking its pattern/path
    */
   static removeRoute(pathOrId: string): void {
-    this.routes = this.routes.filter(routeItem => {
+    this.routes = this.routes.filter((routeItem) => {
       // Handle different route types - this is complex due to React Router's type system
       // In practice, you'd implement proper route matching here
-      return true; // Simplified for demo
-    });
+      return true // Simplified for demo
+    })
   }
 
   /**
    * Reset routes to default configuration
    */
   static reset(): void {
-    this.routes = [...baseRoutes];
+    this.routes = [...baseRoutes]
   }
 
   /**
    * Get routes as array for use in other configurations
    */
   static toArray(): RouteConfigEntry[] {
-    return this.getRoutes();
+    return this.getRoutes()
   }
 }
 
@@ -86,13 +86,13 @@ export class RouteRegistry {
  * Useful for navigation menus, breadcrumbs, and route guards
  */
 export interface RouteMetadata {
-  title: string;
-  description?: string;
-  requiresAuth?: boolean;
-  roles?: string[];
-  icon?: string;
-  hidden?: boolean;
-  component?: string; // File path to component
+  title: string
+  description?: string
+  requiresAuth?: boolean
+  roles?: string[]
+  icon?: string
+  hidden?: boolean
+  component?: string // File path to component
 }
 
 export const routeMetadata: Record<string, RouteMetadata> = {
@@ -126,13 +126,13 @@ export const routeMetadata: Record<string, RouteMetadata> = {
     icon: '📊',
     component: 'features/campaign-builder/pages/campaign-builder.tsx',
   },
-};
+}
 
 /**
  * Get route metadata by path
  */
 export function getRouteMetadata(path: string): RouteMetadata | undefined {
-  return routeMetadata[path];
+  return routeMetadata[path]
 }
 
 /**
@@ -144,37 +144,37 @@ export function getNavigationRoutes(): Array<{ path: string; metadata: RouteMeta
     .map(([path, metadata]) => ({
       path,
       metadata,
-    }));
+    }))
 }
 
 /**
  * Route builder utility for creating dynamic routes
  */
 export class RouteBuilder {
-  private routes: RouteConfigEntry[] = [];
+  private routes: RouteConfigEntry[] = []
 
   /**
    * Add an index route
    */
   addIndex(file: string): RouteBuilder {
-    this.routes.push(index(file));
-    return this;
+    this.routes.push(index(file))
+    return this
   }
 
   /**
    * Add a regular route
    */
   addRoute(path: string, file: string): RouteBuilder {
-    this.routes.push(route(path, file));
-    return this;
+    this.routes.push(route(path, file))
+    return this
   }
 
   /**
    * Add a layout route
    */
   addLayout(file: string, children: RouteConfigEntry[]): RouteBuilder {
-    this.routes.push(layout(file, children));
-    return this;
+    this.routes.push(layout(file, children))
+    return this
   }
 
   /**
@@ -182,26 +182,26 @@ export class RouteBuilder {
    */
   addPrefix(pathPrefix: string, children: RouteConfigEntry[]): RouteBuilder {
     // For simplicity, we'll add each child route with the prefix
-    children.forEach(child => {
+    children.forEach((child) => {
       // This is a simplified approach - in a real implementation you'd handle this more robustly
-      this.routes.push(child);
-    });
-    return this;
+      this.routes.push(child)
+    })
+    return this
   }
 
   /**
    * Build the final route configuration
    */
   build(): RouteConfigEntry[] {
-    return this.routes;
+    return this.routes
   }
 
   /**
    * Reset the builder
    */
   reset(): RouteBuilder {
-    this.routes = [];
-    return this;
+    this.routes = []
+    return this
   }
 }
 
@@ -210,23 +210,23 @@ export class RouteBuilder {
  * Organizes routes by application features
  */
 export function buildFeatureRoutes(): RouteConfigEntry[] {
-  const builder = new RouteBuilder();
+  const builder = new RouteBuilder()
 
   // Home feature
-  builder.addIndex("features/home/pages/home.tsx");
+  builder.addIndex('features/home/pages/home.tsx')
 
   // Rick and Morty feature
   builder
-    .addRoute("characters", "features/rick-and-morty/pages/characters.tsx")
-    .addRoute("characters/:id", "features/rick-and-morty/pages/character-detail.tsx");
+    .addRoute('characters', 'features/rick-and-morty/pages/characters.tsx')
+    .addRoute('characters/:id', 'features/rick-and-morty/pages/character-detail.tsx')
 
   // Health monitoring feature
-  builder.addRoute("internal", "features/health/pages/internal.tsx");
+  builder.addRoute('internal', 'features/health/pages/internal.tsx')
 
   // Campaign builder feature
-  builder.addRoute("campaign-builder", "features/campaign-builder/pages/campaign-builder.tsx");
+  builder.addRoute('campaign-builder', 'features/campaign-builder/pages/campaign-builder.tsx')
 
-  return builder.build();
+  return builder.build()
 }
 
 /**
@@ -235,20 +235,20 @@ export function buildFeatureRoutes(): RouteConfigEntry[] {
 export function buildAdvancedRoutes(): RouteConfigEntry[] {
   return [
     // Home page
-    index("features/home/pages/home.tsx"),
-    
+    index('features/home/pages/home.tsx'),
+
     // Character routes
-    route("characters", "features/rick-and-morty/pages/characters.tsx"),
-    route("characters/:id", "features/rick-and-morty/pages/character-detail.tsx"),
-    
-    // Admin routes 
-    route("admin/internal", "features/health/pages/internal.tsx"),
-    
+    route('characters', 'features/rick-and-morty/pages/characters.tsx'),
+    route('characters/:id', 'features/rick-and-morty/pages/character-detail.tsx'),
+
+    // Admin routes
+    route('admin/internal', 'features/health/pages/internal.tsx'),
+
     // Tools routes
-    route("tools/campaign-builder", "features/campaign-builder/pages/campaign-builder.tsx"),
-  ];
+    route('tools/campaign-builder', 'features/campaign-builder/pages/campaign-builder.tsx'),
+  ]
 }
 
 // Export the default route configuration
 // This will be used in app/routes.ts
-export default baseRoutes;
+export default baseRoutes
